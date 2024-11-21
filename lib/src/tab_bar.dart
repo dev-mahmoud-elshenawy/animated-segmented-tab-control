@@ -163,7 +163,7 @@ class _SegmentedTabControl extends StatefulWidget implements PreferredSizeWidget
 class _SegmentedTabControlState extends State<_SegmentedTabControl>
     with SingleTickerProviderStateMixin {
   EdgeInsets _currentTilePadding = EdgeInsets.zero;
-  Alignment _currentIndicatorAlignment = Alignment.centerLeft;
+  Alignment _currentIndicatorAlignment = AlignmentDirectional.centerStart;
   late AnimationController _internalAnimationController;
   late Animation<Alignment> _internalAnimation;
   TabController? _controller;
@@ -307,13 +307,26 @@ class _SegmentedTabControlState extends State<_SegmentedTabControl>
     return _calculateAlignmentFromTarget(x, index);
   }
 
-  double _calculateTarget(double reminder, int index) {
+ double _calculateTarget(double reminder, int index, BuildContext context) {
+    final isRTL = Directionality.of(context) == TextDirection.rtl;
     final tabLeftX = index > 0 ? flexFactors[index - 1] * _maxWidth : 0;
+
     double target;
-    if (reminder > 0) {
-      target = tabLeftX + ((reminder * 2) * (alignmentXRanges[index].endInclusive - tabLeftX));
+
+    if (isRTL) {
+      // RTL: Flip the logic for calculating `target` if the direction is RTL
+      if (reminder > 0) {
+        target = tabLeftX - ((reminder * 2) * (tabLeftX - alignmentXRanges[index].start));
+      } else {
+        target = tabLeftX - ((reminder * 2) * (alignmentXRanges[index].endInclusive - tabLeftX));
+      }
     } else {
-      target = tabLeftX + ((reminder * 2) * (tabLeftX - alignmentXRanges[index].start));
+      // LTR: Original logic remains as it is
+      if (reminder > 0) {
+        target = tabLeftX + ((reminder * 2) * (alignmentXRanges[index].endInclusive - tabLeftX));
+      } else {
+        target = tabLeftX + ((reminder * 2) * (tabLeftX - alignmentXRanges[index].start));
+      }
     }
 
     return target;
